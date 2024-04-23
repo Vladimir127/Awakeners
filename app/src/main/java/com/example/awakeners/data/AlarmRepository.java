@@ -31,4 +31,10 @@ public class AlarmRepository {
     public LiveData<List<Alarm>> getAlarmsLiveData() {
         return alarmsLiveData;
     }
+
+    public void delete(int alarmId){
+        AlarmDatabase.databaseWriteExecutor.execute(() -> {
+            alarmDao.delete(alarmId);
+        });
+    }
 }

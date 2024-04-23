@@ -9,6 +9,9 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
 
@@ -17,39 +20,78 @@ import androidx.core.app.NotificationCompat;
 
 import com.example.awakeners.R;
 import com.example.awakeners.activities.RingActivity;
+import com.example.awakeners.data.Alarm;
+
+import java.io.IOException;
 
 public class AlarmService extends Service {
     private MediaPlayer mediaPlayer;
     private Vibrator vibrator;
-
+    Alarm alarm;
+    Uri ringtone;
     @Override
     public void onCreate() {
         super.onCreate();
 
-        mediaPlayer = MediaPlayer.create(this, R.raw.alarm);
+        mediaPlayer = new MediaPlayer();
         mediaPlayer.setLooping(true);
 
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        ringtone= RingtoneManager.getActualDefaultRingtoneUri(this.getBaseContext(), RingtoneManager.TYPE_ALARM);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Intent notificationIntent = new Intent(this, RingActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_MUTABLE);
+        Bundle bundle=intent.getBundleExtra(getString(R.string.bundle_alarm_obj));
+        if (bundle!=null)
+            alarm =(Alarm)bundle.getSerializable(getString(R.string.arg_alarm_obj));
 
-        String alarmTitle = String.format("%s Alarm", intent.getStringExtra(TITLE));
+        Intent notificationIntent = new Intent(this, RingActivity.class);
+        notificationIntent.putExtra(getString(R.string.bundle_alarm_obj),bundle);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        String alarmTitle=getString(R.string.alarm_title);
+        if(alarm!=null) {
+            alarmTitle = alarm.getTitle();
+            try {
+                mediaPlayer.setDataSource(this.getBaseContext(), Uri.parse(alarm.getTone()));
+                mediaPlayer.prepareAsync();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+        else{
+
+            try {
+                mediaPlayer.setDataSource(this.getBaseContext(),ringtone);
+                mediaPlayer.prepareAsync();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle(alarmTitle)
-                .setContentText("Ring Ring .. Ring Ring")
+                .setContentTitle("Ring Ring .. Ring Ring")
+                .setContentText(alarmTitle)
                 .setSmallIcon(R.drawable.ic_alarm_black_24dp)
-                .setContentIntent(pendingIntent)
+                .setSound(null)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setFullScreenIntent(pendingIntent,true)
                 .build();
 
-        mediaPlayer.start();
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mediaPlayer) {
+                mediaPlayer.start();
+            }
+        });
 
-        long[] pattern = {0, 100, 1000};
-        vibrator.vibrate(pattern, 0);
+        if(alarm.isVibrate()) {
+            long[] pattern = {0, 100, 1000};
+            vibrator.vibrate(pattern, 0);
+        }
 
         startForeground(1, notification);
 

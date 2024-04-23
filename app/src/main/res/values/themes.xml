@@ -1,9 +1,23 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.Awakeners" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.Awakeners" parent="Theme.AppCompat.DayNight.DarkActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
     <style name="Theme.Awakeners" parent="Base.Theme.Awakeners" />
+
+    <style name="Widget.Button.Toggle" parent="android:Widget">
+        <item name="android:background">@drawable/toggle_bg</item>
+    </style>
+
+    <style name="toggleButton" parent="Base.Theme.Awakeners">
+        <item name="android:buttonStyleToggle">@style/Widget.Button.Toggle</item>
+        <item name="android:textColor">@drawable/toggle_text_color</item>
+    </style>
+
+    <style name="NoActionBar" parent="Theme.Awakeners">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
 </resources>

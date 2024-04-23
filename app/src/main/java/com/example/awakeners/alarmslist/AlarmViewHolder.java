@@ -2,6 +2,7 @@ package com.example.awakeners.alarmslist;
 
 import android.view.View;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -10,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.awakeners.R;
+import com.example.awakeners.createalarm.DayUtil;
 import com.example.awakeners.data.Alarm;
 
 public class AlarmViewHolder extends RecyclerView.ViewHolder {
@@ -21,6 +23,9 @@ public class AlarmViewHolder extends RecyclerView.ViewHolder {
     Switch alarmStarted;
 
     private OnToggleAlarmListener listener;
+    private ImageButton deleteAlarm;
+    private View itemView;
+    private TextView alarmDay;
 
     public AlarmViewHolder(@NonNull View itemView, OnToggleAlarmListener listener) {
         super(itemView);
@@ -30,8 +35,11 @@ public class AlarmViewHolder extends RecyclerView.ViewHolder {
         alarmRecurring = itemView.findViewById(R.id.item_alarm_recurring);
         alarmRecurringDays = itemView.findViewById(R.id.item_alarm_recurringDays);
         alarmTitle = itemView.findViewById(R.id.item_alarm_title);
+        deleteAlarm = itemView.findViewById(R.id.item_alarm_recurring_delete);
+        alarmDay = itemView.findViewById(R.id.item_alarm_day);
 
         this.listener = listener;
+        this.itemView = itemView;
     }
 
     public void bind(Alarm alarm) {
@@ -53,11 +61,30 @@ public class AlarmViewHolder extends RecyclerView.ViewHolder {
         } else {
             alarmTitle.setText(String.format("%s | %d | %d", "Alarm", alarm.getAlarmId(), alarm.getCreated()));
         }
-
+        if (alarm.isRecurring()) {
+            alarmDay.setText(alarm.getRecurringDaysText());
+        } else {
+            alarmDay.setText(DayUtil.getDay(alarm.getHour(), alarm.getMinute()));
+        }
         alarmStarted.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                listener.onToggle(alarm);
+                if (buttonView.isShown() || buttonView.isPressed())
+                    listener.onToggle(alarm);
+            }
+        });
+
+        deleteAlarm.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                listener.onDelete(alarm);
+            }
+        });
+
+        itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                listener.onItemClick(alarm, view);
             }
         });
     }

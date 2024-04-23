@@ -2,4 +2,10 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="textColor">#7B1FA2</color>
+    <color name="colorAccent">#8E02CA</color>
+    <color name="toggleButtonBg">#7B1FA2</color>
+    <color name="dark">#8b786a</color>
+    <color name="accent">#c78d7f</color>
+    <color name="gradient_fiol1">@color/accent</color>
 </resources>

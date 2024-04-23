@@ -18,6 +18,7 @@ import android.widget.Button;
 
 import com.example.awakeners.R;
 import com.example.awakeners.data.Alarm;
+import com.example.awakeners.utils.PermissionUtils;
 
 import java.util.List;
 
@@ -60,6 +61,8 @@ public class AlarmsListFragment extends Fragment implements OnToggleAlarmListene
             }
         });
 
+        PermissionUtils.getOverlaysPermission(getContext());
+
         return view;
     }
 
@@ -72,5 +75,21 @@ public class AlarmsListFragment extends Fragment implements OnToggleAlarmListene
             alarm.schedule(getContext());
             alarmsListViewModel.update(alarm);
         }
+    }
+
+    @Override
+    public void onDelete(Alarm alarm) {
+        if (alarm.isStarted())
+            alarm.cancelAlarm(getContext());
+        alarmsListViewModel.delete(alarm.getAlarmId());
+    }
+
+    @Override
+    public void onItemClick(Alarm alarm, View view) {
+        if (alarm.isStarted())
+            alarm.cancelAlarm(getContext());
+        Bundle args = new Bundle();
+        args.putSerializable(getString(R.string.arg_alarm_obj),alarm);
+        Navigation.findNavController(view).navigate(R.id.action_alarmsListFragment_to_createAlarmFragment,args);
     }
 }

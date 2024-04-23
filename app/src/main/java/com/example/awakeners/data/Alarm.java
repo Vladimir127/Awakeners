@@ -1,36 +1,30 @@
 package com.example.awakeners.data;
 
-import static com.example.awakeners.broadcastreceiver.AlarmBroadcastReceiver.FRIDAY;
-import static com.example.awakeners.broadcastreceiver.AlarmBroadcastReceiver.MONDAY;
-import static com.example.awakeners.broadcastreceiver.AlarmBroadcastReceiver.RECURRING;
-import static com.example.awakeners.broadcastreceiver.AlarmBroadcastReceiver.SATURDAY;
-import static com.example.awakeners.broadcastreceiver.AlarmBroadcastReceiver.SUNDAY;
-import static com.example.awakeners.broadcastreceiver.AlarmBroadcastReceiver.THURSDAY;
-import static com.example.awakeners.broadcastreceiver.AlarmBroadcastReceiver.TITLE;
-import static com.example.awakeners.broadcastreceiver.AlarmBroadcastReceiver.TUESDAY;
-import static com.example.awakeners.broadcastreceiver.AlarmBroadcastReceiver.WEDNESDAY;
-
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.example.awakeners.R;
 import com.example.awakeners.broadcastreceiver.AlarmBroadcastReceiver;
 import com.example.awakeners.createalarm.DayUtil;
 
+import java.io.Serializable;
 import java.util.Calendar;
 
 @Entity(tableName = "alarm_table")
-public class Alarm {
+public class Alarm implements Serializable {
     @PrimaryKey
     private int alarmId;
 
-    private final int hour, minute;
+    private int hour;
+    private int minute;
 
     /**
      * started - признак того, что будильник заведён;
@@ -42,8 +36,10 @@ public class Alarm {
     private String title;
 
     private long created;   // TODO: А это шо?
+    private String tone;
+    private boolean vibrate;
 
-    public Alarm(int alarmId, int hour, int minute, String title, long created, boolean started, boolean recurring, boolean monday, boolean tuesday, boolean wednesday, boolean thursday, boolean friday, boolean saturday, boolean sunday) {
+    public Alarm(int alarmId, int hour, int minute, String title, long created, boolean started, boolean recurring, boolean monday, boolean tuesday, boolean wednesday, boolean thursday, boolean friday, boolean saturday, boolean sunday, String tone, boolean vibrate) {
         this.alarmId = alarmId;
         this.hour = hour;
         this.minute = minute;
@@ -62,6 +58,8 @@ public class Alarm {
         this.title = title;
 
         this.created = created;
+        this.vibrate=vibrate;
+        this.tone=tone;
     }
 
     public int getHour() {
@@ -72,8 +70,24 @@ public class Alarm {
         return minute;
     }
 
+    public void setHour(int hour) {
+        this.hour = hour;
+    }
+
+    public void setMinute(int minute) {
+        this.minute = minute;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     public boolean isStarted() {
         return started;
+    }
+
+    public void setStarted(boolean started) {
+        this.started = started;
     }
 
     public int getAlarmId() {
@@ -116,22 +130,30 @@ public class Alarm {
         return sunday;
     }
 
+    public String getTone() {
+        return tone;
+    }
+
+    public void setTone(String tone) {
+        this.tone = tone;
+    }
+
+    public boolean isVibrate() {
+        return vibrate;
+    }
+
+    public void setVibrate(boolean vibrate) {
+        this.vibrate = vibrate;
+    }
+
     public void schedule(Context context) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
         Intent intent = new Intent(context, AlarmBroadcastReceiver.class);
-        intent.putExtra(RECURRING, recurring);
-        intent.putExtra(MONDAY, monday);
-        intent.putExtra(TUESDAY, tuesday);
-        intent.putExtra(WEDNESDAY, wednesday);
-        intent.putExtra(THURSDAY, thursday);
-        intent.putExtra(FRIDAY, friday);
-        intent.putExtra(SATURDAY, saturday);
-        intent.putExtra(SUNDAY, sunday);
-
-        intent.putExtra(TITLE, title);
-
-        PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_MUTABLE);
+        Bundle bundle=new Bundle();
+        bundle.putSerializable(context.getString(R.string.arg_alarm_obj),this);
+        intent.putExtra(context.getString(R.string.bundle_alarm_obj),bundle);
+        PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
@@ -148,7 +170,7 @@ public class Alarm {
         if (!recurring) {
             String toastText = null;
             try {
-                toastText = String.format("One Time Alarm %s scheduled for %s at %02d:%02d", title, DayUtil.toDay(calendar.get(Calendar.DAY_OF_WEEK)), hour, minute, alarmId);
+                toastText = String.format("One Time Alarm %s scheduled for %s at %02d:%02d", title, DayUtil.toDay(calendar.get(Calendar.DAY_OF_WEEK)), hour, minute);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -160,7 +182,7 @@ public class Alarm {
                     alarmPendingIntent
             );
         } else {
-            String toastText = String.format("Recurring Alarm %s scheduled for %s at %02d:%02d", title, getRecurringDaysText(), hour, minute, alarmId);
+            String toastText = String.format("Recurring Alarm %s scheduled for %s at %02d:%02d", title, getRecurringDaysText(), hour, minute);
             Toast.makeText(context, toastText, Toast.LENGTH_LONG).show();
 
             final long RUN_DAILY = 24 * 60 * 60 * 1000;
